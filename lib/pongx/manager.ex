@@ -19,14 +19,19 @@ defmodule Pongx.Manager do
   # Declare all valid Component types
   def components do
     [
-      # MyApp.Components.SampleComponent
+      Pongx.Components.YVelocity,
+      Pongx.Components.XVelocity,
+      Pongx.Components.YPosition,
+      Pongx.Components.XPosition,
+      Pongx.Components.Score
     ]
   end
 
   # Declare all Systems to run
   def systems do
     [
-      # MyApp.Systems.SampleSystem
+      Pongx.Systems.ClientEventHandler,
+      Pongx.Systems.Movement
     ]
   end
 end

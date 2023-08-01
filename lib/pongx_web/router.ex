@@ -68,6 +68,8 @@ defmodule PongxWeb.Router do
       on_mount: [{PongxWeb.PlayerAuth, :ensure_authenticated}] do
       live "/players/settings", PlayerSettingsLive, :edit
       live "/players/settings/confirm_email/:token", PlayerSettingsLive, :confirm_email
+
+      live "/game", GameLive
     end
   end
 
