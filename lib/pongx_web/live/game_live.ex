@@ -4,6 +4,8 @@ defmodule PongxWeb.GameLive do
   # alias Pongx.Components.XPosition
   alias Pongx.Components.YPosition
   alias Pongx.Components.Score
+  alias Pongx.Components.ImageFile
+  alias Pongx.Components.PlayerSpawned
 
   def mount(_params, %{"player_token" => token} = _session, socket) do
     player = Pongx.Players.get_player_by_session_token(token)
@@ -12,22 +14,63 @@ defmodule PongxWeb.GameLive do
       socket
       |> assign(player_entity: player.id)
       |> assign(keys: MapSet.new())
+      |> assign(screen_height: 50, screen_width: 90)
       |> assign(y_coord: nil, current_score: nil)
+      |> assign_loading_state()
 
     if connected?(socket) do
       ECSx.ClientEvents.add(player.id, :spawn_paddle)
-      :timer.send_interval(50, :load_player_info)
+      # The first load will now have additional responsibilities
+      send(self(), :first_load)
     end
 
     {:ok, socket}
   end
 
-  def handle_info(:load_player_info, socket) do
+  defp assign_loading_state(socket) do
+    assign(socket,
+      y_coord: nil,
+      current_score: nil,
+      # This new assign will control whether the loading screen is shown
+      loading: true
+    )
+  end
+
+  def handle_info(:first_load, socket) do
+    # Don't start fetching components until after spawn is complete!
+    :ok = wait_for_spawn(socket.assigns.player_entity)
+
+    socket =
+      socket
+      |> assign_player_paddle()
+      |> assign(loading: false)
+
+    # We want to keep up-to-date on this info
+    :timer.send_interval(50, :refresh)
+
+    {:noreply, socket}
+  end
+
+  def handle_info(:refresh, socket) do
+    {:noreply, assign_player_paddle(socket)}
+  end
+
+  defp wait_for_spawn(player_entity) do
+    if PlayerSpawned.exists?(player_entity) do
+      :ok
+    else
+      Process.sleep(10)
+      wait_for_spawn(player_entity)
+    end
+  end
+
+  defp assign_player_paddle(socket) do
     # This will run every 50ms to keep the client assigns updated
     y = YPosition.get_one(socket.assigns.player_entity)
     score = Score.get_one(socket.assigns.player_entity)
+    image = ImageFile.get_one(socket.assigns.player_entity)
 
-    {:noreply, assign(socket, y_coord: y, current_score: score)}
+    assign(socket, y_coord: y, current_score: score, player_paddle_image: image)
   end
 
   def handle_event("keydown", %{"key" => key}, socket) do
@@ -70,6 +113,27 @@ defmodule PongxWeb.GameLive do
       <p>Player ID: <%= @player_entity %></p>
       <p>Player paddle position: <%= @y_coord %></p>
       <p>Score: <%= @current_score %></p>
+      <br />
+      <svg
+        viewBox={"0 0 #{@screen_width} #{@screen_height}"}
+        preserveAspectRatio="xMinYMin slice"
+      >
+      <rect width={@screen_width} height={@screen_height} fill="#9db2bf" />
+
+      <%= if @loading do %>
+          <text x={div(@screen_width, 2)} y={div(@screen_height, 2)} style="font: 1px serif; color: #dde6ed">
+            Loading...
+          </text>
+        <% else %>
+      <image
+            x="1"
+            y={@y_coord}
+            width="5"
+            height="5"
+            href={~p"/images/#{@player_paddle_image}"}
+          />
+          <% end %>
+      </svg>
     </div>
     """
   end

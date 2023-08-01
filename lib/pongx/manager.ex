@@ -19,6 +19,8 @@ defmodule Pongx.Manager do
   # Declare all valid Component types
   def components do
     [
+      Pongx.Components.PlayerSpawned,
+      Pongx.Components.ImageFile,
       Pongx.Components.YVelocity,
       Pongx.Components.XVelocity,
       Pongx.Components.YPosition,

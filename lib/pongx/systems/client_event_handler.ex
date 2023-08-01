@@ -9,6 +9,8 @@ defmodule Pongx.Systems.ClientEventHandler do
   alias Pongx.Components.YPosition
   alias Pongx.Components.XVelocity
   alias Pongx.Components.YVelocity
+  alias Pongx.Components.ImageFile
+  alias Pongx.Components.PlayerSpawned
 
   @impl ECSx.System
   def run do
@@ -23,6 +25,9 @@ defmodule Pongx.Systems.ClientEventHandler do
     YPosition.add(player, 25)
     XVelocity.add(player, 0)
     YVelocity.add(player, 0)
+
+    ImageFile.add(player, "paddle.svg")
+    PlayerSpawned.add(player)
   end
 
   defp process_one({player, {:move, :north}}), do: YVelocity.update(player, -1)
