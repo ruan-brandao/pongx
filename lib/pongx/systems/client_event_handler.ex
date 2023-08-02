@@ -21,13 +21,23 @@ defmodule Pongx.Systems.ClientEventHandler do
 
   defp process_one({player, :spawn_paddle}) do
     Score.add(player, 0)
-    XPosition.add(player, 0)
+    XPosition.add(player, 1)
     YPosition.add(player, 25)
     XVelocity.add(player, 0)
     YVelocity.add(player, 0)
 
     ImageFile.add(player, "paddle.svg")
     PlayerSpawned.add(player)
+  end
+
+  defp process_one({ball, :spawn_ball}) do
+    XPosition.add(ball, 45)
+    YPosition.add(ball, 25)
+    XVelocity.add(ball, -1)
+    YVelocity.add(ball, 0)
+
+    ImageFile.add(ball, "ball.svg")
+    PlayerSpawned.add(ball)
   end
 
   defp process_one({player, {:move, :north}}), do: YVelocity.update(player, -1)

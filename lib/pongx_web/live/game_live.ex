@@ -1,7 +1,7 @@
 defmodule PongxWeb.GameLive do
   use PongxWeb, :live_view
 
-  # alias Pongx.Components.XPosition
+  alias Pongx.Components.XPosition
   alias Pongx.Components.YPosition
   alias Pongx.Components.Score
   alias Pongx.Components.ImageFile
@@ -9,17 +9,21 @@ defmodule PongxWeb.GameLive do
 
   def mount(_params, %{"player_token" => token} = _session, socket) do
     player = Pongx.Players.get_player_by_session_token(token)
+    ball_entity_id = Ecto.UUID.generate()
 
     socket =
       socket
       |> assign(player_entity: player.id)
+      |> assign(ball_entity: ball_entity_id)
       |> assign(keys: MapSet.new())
       |> assign(screen_height: 50, screen_width: 90)
-      |> assign(y_coord: nil, current_score: nil)
+      |> assign(x_coord: nil, y_coord: nil, current_score: nil)
+      |> assign(ball_x_coord: nil, ball_y_coord: nil)
       |> assign_loading_state()
 
     if connected?(socket) do
       ECSx.ClientEvents.add(player.id, :spawn_paddle)
+      ECSx.ClientEvents.add(ball_entity_id, :spawn_ball)
       # The first load will now have additional responsibilities
       send(self(), :first_load)
     end
@@ -29,8 +33,11 @@ defmodule PongxWeb.GameLive do
 
   defp assign_loading_state(socket) do
     assign(socket,
+      x_coord: nil,
       y_coord: nil,
       current_score: nil,
+      ball_x_coord: nil,
+      ball_y_coord: nil,
       # This new assign will control whether the loading screen is shown
       loading: true
     )
@@ -38,11 +45,12 @@ defmodule PongxWeb.GameLive do
 
   def handle_info(:first_load, socket) do
     # Don't start fetching components until after spawn is complete!
-    :ok = wait_for_spawn(socket.assigns.player_entity)
+    :ok = wait_for_spawn(socket.assigns.player_entity, socket.assigns.ball_entity)
 
     socket =
       socket
       |> assign_player_paddle()
+      |> assign_ball()
       |> assign(loading: false)
 
     # We want to keep up-to-date on this info
@@ -52,25 +60,39 @@ defmodule PongxWeb.GameLive do
   end
 
   def handle_info(:refresh, socket) do
-    {:noreply, assign_player_paddle(socket)}
+    socket =
+      socket
+      |> assign_player_paddle()
+      |> assign_ball()
+
+    {:noreply, socket}
   end
 
-  defp wait_for_spawn(player_entity) do
-    if PlayerSpawned.exists?(player_entity) do
+  defp wait_for_spawn(player_entity, ball_entity) do
+    if PlayerSpawned.exists?(player_entity) and PlayerSpawned.exists?(ball_entity) do
       :ok
     else
       Process.sleep(10)
-      wait_for_spawn(player_entity)
+      wait_for_spawn(player_entity, ball_entity)
     end
   end
 
   defp assign_player_paddle(socket) do
     # This will run every 50ms to keep the client assigns updated
+    x = XPosition.get_one(socket.assigns.player_entity)
     y = YPosition.get_one(socket.assigns.player_entity)
     score = Score.get_one(socket.assigns.player_entity)
     image = ImageFile.get_one(socket.assigns.player_entity)
 
-    assign(socket, y_coord: y, current_score: score, player_paddle_image: image)
+    assign(socket, x_coord: x, y_coord: y, current_score: score, player_paddle_image: image)
+  end
+
+  defp assign_ball(socket) do
+    x = XPosition.get_one(socket.assigns.ball_entity) |> IO.inspect(label: "ball X position")
+    y = YPosition.get_one(socket.assigns.ball_entity) |> IO.inspect(label: "ball Y position")
+    image = ImageFile.get_one(socket.assigns.ball_entity)
+
+    assign(socket, ball_x_coord: x, ball_y_coord: y, ball_image: image)
   end
 
   def handle_event("keydown", %{"key" => key}, socket) do
@@ -111,28 +133,38 @@ defmodule PongxWeb.GameLive do
     <div id="game" phx-window-keydown="keydown" phx-window-keyup="keyup">
       <p>Game running</p>
       <p>Player ID: <%= @player_entity %></p>
-      <p>Player paddle position: <%= @y_coord %></p>
+      <p>Player paddle position: <%= inspect({@x_coord, @y_coord}) %></p>
+      <p>Ball position: <%= inspect({@ball_x_coord, @ball_y_coord}) %></p>
       <p>Score: <%= @current_score %></p>
       <br />
-      <svg
-        viewBox={"0 0 #{@screen_width} #{@screen_height}"}
-        preserveAspectRatio="xMinYMin slice"
-      >
-      <rect width={@screen_width} height={@screen_height} fill="#9db2bf" />
+      <svg viewBox={"0 0 #{@screen_width} #{@screen_height}"} preserveAspectRatio="xMinYMin slice">
+        <rect width={@screen_width} height={@screen_height} fill="#9db2bf" />
 
-      <%= if @loading do %>
-          <text x={div(@screen_width, 2)} y={div(@screen_height, 2)} style="font: 1px serif; color: #dde6ed">
+        <%= if @loading do %>
+          <text
+            x={div(@screen_width, 2)}
+            y={div(@screen_height, 2)}
+            style="font: 1px serif; color: #dde6ed"
+          >
             Loading...
           </text>
         <% else %>
-      <image
-            x="1"
+          <image
+            x={@x_coord}
             y={@y_coord}
             width="5"
             height="5"
             href={~p"/images/#{@player_paddle_image}"}
           />
-          <% end %>
+
+          <image
+            x={@ball_x_coord}
+            y={@ball_y_coord}
+            width="1"
+            height="1"
+            href={~p"/images/#{@ball_image}"}
+          />
+        <% end %>
       </svg>
     </div>
     """
