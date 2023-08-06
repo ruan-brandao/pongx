@@ -28,7 +28,7 @@ defmodule Pongx.Systems.Movement do
   end
 
   defp calculate_new_position(current_position, velocity) do
-    new_position = current_position + velocity
+    current_position + velocity
     # new_position = Enum.min([new_position, 45])
 
     # Enum.max([new_position, 0])

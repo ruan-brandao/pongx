@@ -88,8 +88,8 @@ defmodule PongxWeb.GameLive do
   end
 
   defp assign_ball(socket) do
-    x = XPosition.get_one(socket.assigns.ball_entity) |> IO.inspect(label: "ball X position")
-    y = YPosition.get_one(socket.assigns.ball_entity) |> IO.inspect(label: "ball Y position")
+    x = XPosition.get_one(socket.assigns.ball_entity)
+    y = YPosition.get_one(socket.assigns.ball_entity)
     image = ImageFile.get_one(socket.assigns.ball_entity)
 
     assign(socket, ball_x_coord: x, ball_y_coord: y, ball_image: image)

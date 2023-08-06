@@ -32,6 +32,7 @@ defmodule Pongx.Manager do
   # Declare all Systems to run
   def systems do
     [
+      Pongx.Systems.Collision,
       Pongx.Systems.ClientEventHandler,
       Pongx.Systems.Movement
     ]

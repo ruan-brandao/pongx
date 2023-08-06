@@ -21,9 +21,9 @@ defmodule Pongx.Systems.ClientEventHandler do
 
   defp process_one({player, :spawn_paddle}) do
     Score.add(player, 0)
+    # paddles only move vertically, so they don't need an XVelocity
     XPosition.add(player, 1)
     YPosition.add(player, 25)
-    XVelocity.add(player, 0)
     YVelocity.add(player, 0)
 
     ImageFile.add(player, "paddle.svg")
