@@ -8,7 +8,9 @@
 import Config
 
 config :pongx,
-  ecto_repos: [Pongx.Repo]
+  ecto_repos: [Pongx.Repo],
+  game_world_width: 90,
+  game_world_height: 50
 
 # Configures the endpoint
 config :pongx, PongxWeb.Endpoint,

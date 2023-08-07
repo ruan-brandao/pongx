@@ -34,7 +34,7 @@ defmodule Pongx.Systems.ClientEventHandler do
     XPosition.add(ball, 45)
     YPosition.add(ball, 25)
     XVelocity.add(ball, -1)
-    YVelocity.add(ball, 0)
+    YVelocity.add(ball, 1)
 
     ImageFile.add(ball, "ball.svg")
     PlayerSpawned.add(ball)

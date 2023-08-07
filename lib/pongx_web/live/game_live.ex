@@ -8,6 +8,8 @@ defmodule PongxWeb.GameLive do
   alias Pongx.Components.PlayerSpawned
 
   def mount(_params, %{"player_token" => token} = _session, socket) do
+    game_world_width = Application.fetch_env!(:pongx, :game_world_width)
+    game_world_height = Application.fetch_env!(:pongx, :game_world_height)
     player = Pongx.Players.get_player_by_session_token(token)
     ball_entity_id = Ecto.UUID.generate()
 
@@ -16,7 +18,7 @@ defmodule PongxWeb.GameLive do
       |> assign(player_entity: player.id)
       |> assign(ball_entity: ball_entity_id)
       |> assign(keys: MapSet.new())
-      |> assign(screen_height: 50, screen_width: 90)
+      |> assign(screen_height: game_world_height, screen_width: game_world_width)
       |> assign(x_coord: nil, y_coord: nil, current_score: nil)
       |> assign(ball_x_coord: nil, ball_y_coord: nil)
       |> assign_loading_state()

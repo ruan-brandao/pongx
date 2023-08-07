@@ -9,28 +9,39 @@ defmodule Pongx.Systems.Movement do
   alias Pongx.Components.XVelocity
   alias Pongx.Components.YVelocity
 
+  @game_world_width Application.compile_env(:pongx, :game_world_width)
+  @game_world_height Application.compile_env(:pongx, :game_world_height)
+
   @impl ECSx.System
   def run do
+    max_x_position = @game_world_width - 1
+    max_y_position = @game_world_height - 1
+
     for {entity, x_velocity} <- XVelocity.get_all() do
-      x_position = XPosition.get_one(entity)
-      new_x_position = calculate_new_position(x_position, x_velocity)
+      new_x_position =
+        entity
+        |> XPosition.get_one()
+        |> calculate_new_position(x_velocity, max_x_position)
+
       XPosition.update(entity, new_x_position)
     end
 
     # Once the x-values are updated, do the same for the y-values
     for {entity, y_velocity} <- YVelocity.get_all() do
-      y_position = YPosition.get_one(entity)
-      new_y_position = calculate_new_position(y_position, y_velocity)
+      new_y_position =
+        entity
+        |> YPosition.get_one()
+        |> calculate_new_position(y_velocity, max_y_position)
+
       YPosition.update(entity, new_y_position)
     end
 
     :ok
   end
 
-  defp calculate_new_position(current_position, velocity) do
-    current_position + velocity
-    # new_position = Enum.min([new_position, 45])
-
-    # Enum.max([new_position, 0])
+  defp calculate_new_position(current_position, velocity, max_position) do
+    new_position = current_position + velocity
+    new_position = Enum.min([new_position, max_position])
+    Enum.max([new_position, 0])
   end
 end
