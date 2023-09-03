@@ -21,7 +21,7 @@ defmodule PongxWeb.GameLive do
       |> assign(screen_height: game_world_height, screen_width: game_world_width)
       |> assign(x_coord: nil, y_coord: nil, current_score: nil)
       |> assign(ball_x_coord: nil, ball_y_coord: nil)
-      |> assign_loading_state()
+      |> assign(loading: true)
 
     if connected?(socket) do
       ECSx.ClientEvents.add(player.id, :spawn_paddle)
@@ -31,18 +31,6 @@ defmodule PongxWeb.GameLive do
     end
 
     {:ok, socket}
-  end
-
-  defp assign_loading_state(socket) do
-    assign(socket,
-      x_coord: nil,
-      y_coord: nil,
-      current_score: nil,
-      ball_x_coord: nil,
-      ball_y_coord: nil,
-      # This new assign will control whether the loading screen is shown
-      loading: true
-    )
   end
 
   def handle_info(:first_load, socket) do
