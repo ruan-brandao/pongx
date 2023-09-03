@@ -133,12 +133,6 @@ defmodule PongxWeb.GameLive do
   def render(assigns) do
     ~H"""
     <div id="game" phx-window-keydown="keydown" phx-window-keyup="keyup">
-      <p>Game running</p>
-      <p>Player ID: <%= @player_entity %></p>
-      <p>Player paddle position: <%= inspect({@x_coord, @y_coord}) %></p>
-      <p>Ball position: <%= inspect({@ball_x_coord, @ball_y_coord}) %></p>
-      <p>Score: <%= @current_score %></p>
-      <br />
       <svg viewBox={"0 0 #{@screen_width} #{@screen_height}"} preserveAspectRatio="xMinYMin slice">
         <rect width={@screen_width} height={@screen_height} fill="#9db2bf" />
 
@@ -168,6 +162,12 @@ defmodule PongxWeb.GameLive do
           />
         <% end %>
       </svg>
+      <br />
+      <p>Game running</p>
+      <p>Player ID: <%= @player_entity %></p>
+      <p>Player paddle position: <%= inspect({@x_coord, @y_coord}) %></p>
+      <p>Ball position: <%= inspect({@ball_x_coord, @ball_y_coord}) %></p>
+      <p>Score: <%= @current_score %></p>
     </div>
     """
   end
