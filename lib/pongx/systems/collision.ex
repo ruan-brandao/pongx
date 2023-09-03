@@ -4,14 +4,15 @@ defmodule Pongx.Systems.Collision do
   """
   @behaviour ECSx.System
 
-  alias Pongx.Components.YPosition
   alias Pongx.SystemUtils
   alias Pongx.Components.Score
   alias Pongx.Components.XVelocity
+  alias Pongx.Components.XPosition
   alias Pongx.Components.YVelocity
   alias Pongx.Components.YPosition
 
   @game_world_height Application.compile_env(:pongx, :game_world_height)
+  @game_world_width Application.compile_env(:pongx, :game_world_width)
 
   @impl ECSx.System
   def run do
@@ -32,9 +33,17 @@ defmodule Pongx.Systems.Collision do
       YVelocity.update(ball, current_y_velocity * -1)
     end
 
+    max_x_position = @game_world_width - 1
+    x_position = XPosition.get_one(ball)
+
+    if x_position in [0, max_x_position] do
+      XVelocity.update(ball, current_x_velocity * -1)
+    end
+
     # Only paddles have scores
     paddles = Score.get_all()
 
+    # Bounces the ball when it hits a paddle
     Enum.each(paddles, fn {paddle, _} ->
       if SystemUtils.distance_between(paddle, ball) < 1 do
         XVelocity.update(ball, current_x_velocity * -1)
